@@ -1,0 +1,14 @@
+07-08-2026,07:39:00 PM,CRITICAL,2,1,1,1,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH; W2:Helmet=OK,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:41:28 PM,HIGH,1,1,1,0,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet and safety vest before continuing.
+07-08-2026,07:41:53 PM,CRITICAL,2,1,0,1,True,"W1:Helmet=NO,Vest=OK,Zone=SAFE,Risk=HIGH; W2:Helmet=NO,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:42:03 PM,CRITICAL,3,1,0,2,True,"W1:Helmet=NO,Vest=OK,Zone=SAFE,Risk=HIGH; W2:Helmet=NO,Vest=OK,Zone=DANGER,Risk=CRITICAL; W3:Helmet=NO,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:43:51 PM,HIGH,2,1,0,0,True,"W1:Helmet=NO,Vest=OK,Zone=SAFE,Risk=HIGH; W2:Helmet=OK,Vest=OK,Zone=SAFE,Risk=LOW",STOP UNSAFE WORK. The worker must wear a safety helmet before continuing.
+07-08-2026,07:44:01 PM,HIGH,1,1,0,0,True,"W1:Helmet=NO,Vest=OK,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet before continuing.
+07-08-2026,07:48:15 PM,CRITICAL,1,0,0,1,True,"W1:Helmet=OK,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:52:45 PM,CRITICAL,2,0,0,1,True,"W1:Helmet=OK,Vest=OK,Zone=SAFE,Risk=LOW; W2:Helmet=OK,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:52:57 PM,CRITICAL,1,0,0,1,True,"W1:Helmet=OK,Vest=OK,Zone=DANGER,Risk=CRITICAL",STOP WORK IMMEDIATELY. Worker detected inside the restricted hazard zone. Move the worker to a safe area.
+07-08-2026,07:53:43 PM,HIGH,1,1,1,0,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet and safety vest before continuing.
+10-08-2026,08:53:20 PM,HIGH,1,1,1,0,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet and safety vest before continuing.
+10-08-2026,08:53:30 PM,HIGH,1,1,0,0,True,"W1:Helmet=NO,Vest=OK,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet before continuing.
+11-08-2026,06:41:05 PM,HIGH,1,1,2,0,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet and safety vest before continuing.
+11-08-2026,06:41:15 PM,HIGH,1,1,2,0,True,"W1:Helmet=NO,Vest=NO,Zone=SAFE,Risk=HIGH",STOP UNSAFE WORK. The worker must wear a safety helmet and safety vest before continuing.

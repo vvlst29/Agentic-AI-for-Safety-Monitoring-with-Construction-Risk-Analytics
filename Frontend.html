@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #14181B;
+    color: #E8ECEE;
+    font-family: 'Inter', sans-serif;
+  }
+
+  html, body { height: 100%; }
+  body { overflow: hidden; }
+
+  .app-shell {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+  }
+
+  .sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: #0A1F44;
+    color: #E8ECEE;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar-heading {
+    padding: 0 20px 18px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #FFFFFF;
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+    line-height: 1.3;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 12px;
+  }
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #B9C4DE;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sidebar-link .sidebar-icon { font-size: 15px; }
+  .sidebar-link:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
+  .sidebar-link.active {
+    background: rgba(255,255,255,0.16);
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+
+  .main-content {
+    flex: 1;
+    height: 100vh;
+    min-height: 0;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: #1E2427;
+    border: 1px solid #2A3134;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .header {
+    padding: 24px 28px;
+    border-bottom: 1px solid #2A3134;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .header .timestamp {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #8A9296;
+  }
+
+  .risk-row {
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #2A3134;
+  }
+  .risk-label {
+    font-size: 13px;
+    color: #8A9296;
+  }
+  .risk-value {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .risk-score {
+    font-size: 13px;
+    color: #8A9296;
+  }
+
+  .risk-low     { color: #4CAF6D; }
+  .risk-moderate{ color: #F2A93B; }
+  .risk-critical{ color: #E5484D; }
+  .risk-error   { color: #8A9296; }
+
+  .donut-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 28px;
+    border-bottom: 1px solid #2A3134;
+  }
+  .donut {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+  .donut svg { width: 100%; height: 100%; }
+  .donut circle.donut-track { stroke: #2A3134; }
+  .donut circle.donut-arc {
+    transition: stroke-dasharray 0.6s ease, stroke 0.3s ease;
+  }
+  .donut-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .donut-score { font-size: 28px; font-weight: 700; }
+  .donut-total { font-size: 12px; color: #8A9296; margin-top: 2px; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid #2A3134;
+  }
+  .metric {
+    padding: 20px 16px;
+    text-align: center;
+    border-right: 1px solid #2A3134;
+  }
+  .metric:last-child { border-right: none; }
+  .metric .icon {
+    font-size: 18px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .metric .value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .metric .label {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #8A9296;
+  }
+
+  .section {
+    padding: 20px 28px;
+    border-bottom: 1px solid #2A3134;
+  }
+  .section:last-child { border-bottom: none; }
+  .section h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8A9296;
+  }
+  .section ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .section li {
+    padding: 8px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    border-top: 1px solid #262C2F;
+  }
+  .section li:first-child { border-top: none; }
+
+  .findings li::before { content: "⚠ "; color: #F2A93B; }
+  .actions li::before  { content: "! "; color: #E5484D; font-weight: 700; }
+
+  .optimal {
+    padding: 20px 28px;
+    font-size: 14px;
+    color: #4CAF6D;
+  }
+
+  .loading, .error-state {
+    padding: 40px 28px;
+    text-align: center;
+    color: #8A9296;
+    font-size: 14px;
+  }
+
+  /* ---------------- Skeleton loading state (perceived speed) ---------------- */
+  .skeleton-block {
+    padding: 24px 28px;
+  }
+  .skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #1E2427 25%, #262C2F 37%, #1E2427 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    margin-bottom: 12px;
+  }
+  .skeleton-line.w-60 { width: 60%; }
+  .skeleton-line.w-40 { width: 40%; }
+  .skeleton-line.w-90 { width: 90%; }
+  .skeleton-line.tall { height: 28px; }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-line { animation: none; }
+  }
+
+  .kpi-value.kpi-loading {
+    color: #8A9296;
+  }
+
+  button {
+    margin-top: 16px;
+    padding: 8px 16px;
+    background: #2A3134;
+    color: #E8ECEE;
+    border: 1px solid #3A4245;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  button:hover { background: #323A3D; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    margin: 0;
+    padding: 10px 16px;
+    background: #1E2427;
+    border: 1px solid #2A3134;
+    border-radius: 4px;
+    color: #8A9296;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tab-btn.active {
+    background: #2A3134;
+    color: #E8ECEE;
+    border-color: #3A4245;
+  }
+
+  .wrap {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card.wide { max-width: none; }
+
+  /* Only one of these views is visible at a time (Dashboard/Report,
+     Schedule & Cost, Complaint & Insurance, Safety Check).
+     Whichever is visible fills all remaining height under the sidebar
+     and scrolls internally so the browser window itself never needs to
+     scroll. */
+  #home-view, #weather-resource-view, #schedule-cost-view, #complaint-insurance-view, #report-view, #cs-app {
+    flex: 1;
+    min-height: 0;
+  }
+  #home-view, #weather-resource-view, #schedule-cost-view, #complaint-insurance-view, #report-view {
+    display: flex;
+    flex-direction: column;
+  }
+  #cs-app { overflow-y: auto; }
+
+  /* ---------------- Home page (project title + photo strip) ---------------- */
+  #home-view {
+    align-items: center;
+    padding: 32px 4px 8px;
+    overflow-y: auto;
+  }
+  .home-title {
+    margin: 0 0 28px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #4C8CF2;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---------------- Dashboard KPI grid ---------------- */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 4px 4px 8px;
+    overflow-y: auto;
+  }
+  @media (max-width: 820px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+
+  .dashboard-heading {
+    margin: 4px 4px 18px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #4C8CF2;
+    letter-spacing: 0.01em;
+  }
+  /* kept for any legacy references; dashboard-heading class unused now that
+     the KPI grid lives on the Home page under .home-title */
+
+  /* ---------------- Report page: per-agent visualizations ---------------- */
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    padding: 4px 4px 8px;
+    overflow-y: auto;
+  }
+  .report-card {
+    background: #1E2427;
+    border: 1px solid #2A3134;
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .report-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #8A9296;
+    margin-bottom: 12px;
+  }
+  .kpi-tile {
+    background: #1E2427;
+    border: 1px solid #2A3134;
+    border-radius: 8px;
+    padding: 20px 20px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .kpi-tile:hover {
+    border-color: #3A4245;
+    background: #20262A;
+  }
+  .kpi-icon { font-size: 20px; line-height: 1; margin-bottom: 10px; }
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #8A9296;
+  }
+  .kpi-value {
+    font-size: 34px;
+    font-weight: 700;
+    margin-top: 8px;
+    line-height: 1.1;
+    color: #E8ECEE;
+  }
+  .kpi-sub {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #8A9296;
+  }
+
+  /* ---------------- Agent pair grid: fits the screen, no window scroll ---------------- */
+  /* Each section holds two agents side by side, filling the available
+     space edge to edge with no gap between them. Each tile scrolls
+     internally (overflow-y: auto) if its own content is taller than
+     its box, so the window itself never scrolls. */
+  .agent-pair {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .agent-pair > .card {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    border: 1px solid #2A3134;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  .agent-highlight { outline: 2px solid #4C8CF2; outline-offset: -2px; }
+
+  @media (max-width: 700px) {
+    .agent-pair {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+      overflow-y: auto;
+    }
+  }
+
+  .delay-yes { color: #E5484D; }
+  .delay-no  { color: #4CAF6D; }
+  .warn-text { color: #F2A93B; font-size: 12px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid #262C2F;
+  }
+  th {
+    color: #8A9296;
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .status-available   { color: #4CAF6D; }
+  .status-partial     { color: #F2A93B; }
+  .status-unavailable { color: #E5484D; }
+  .risk-tag-low      { color: #4CAF6D; }
+  .risk-tag-medium   { color: #F2A93B; }
+  .risk-tag-high     { color: #E5484D; }
+
+  .resource-summary {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #8A9296;
+    margin-bottom: 10px;
+  }
+  .resource-summary strong { color: #E8ECEE; }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-bar-track {
+    flex: 1;
+    min-width: 60px;
+    height: 8px;
+    background: #2A3134;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease, background 0.3s ease;
+  }
+  .progress-bar-label {
+    font-size: 12px;
+    color: #8A9296;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .cov-covered    { color: #4CAF6D; }
+  .cov-partial    { color: #F2A93B; }
+  .cov-none       { color: #8A9296; }
+
+  .priority-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .priority-urgent, .priority-high { background: rgba(229,72,77,0.15); color: #E5484D; }
+  .priority-standard               { background: rgba(242,169,59,0.15); color: #F2A93B; }
+  .priority-low                    { background: rgba(76,175,109,0.15); color: #4CAF6D; }
+
+  .severity-critical, .severity-high { background: rgba(229,72,77,0.15); color: #E5484D; }
+  .severity-medium                   { background: rgba(242,169,59,0.15); color: #F2A93B; }
+  .severity-low                      { background: rgba(76,175,109,0.15); color: #4CAF6D; }
+
+  .doc-list li::before { content: "📄 "; }
+
+  /* ---------------- Insurance ticket cards (mirrors Complaint cards) ---------------- */
+  .ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .ticket-item-card {
+    background: #20262A;
+    border: 1px solid #2A3134;
+    border-left: 4px solid #8A9296;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .ticket-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .ticket-item-id {
+    font-size: 12px;
+    color: #8A9296;
+  }
+  .ticket-item-category {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E8ECEE;
+    margin-top: 2px;
+  }
+  .ticket-item-text {
+    font-size: 13px;
+    color: #E8ECEE;
+    margin: 0 0 8px;
+  }
+  .ticket-item-root {
+    font-size: 12px;
+    color: #8A9296;
+    margin-bottom: 4px;
+  }
+  .ticket-item-actions-label {
+    font-size: 12px;
+    color: #8A9296;
+    margin-bottom: 4px;
+  }
+  .ticket-item-status {
+    font-size: 12px;
+    color: #8A9296;
+    border-top: 1px solid #2A3134;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  /* ---------------- Horizontal bar chart (Cost impact: Site-wide summary) ---------------- */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .bar-label {
+    font-size: 13px;
+    color: #E8ECEE;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bar-track {
+    height: 10px;
+    background: #262C2F;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-track.thick {
+    height: 16px;
+    border-radius: 4px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .bar-value {
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .bar-note {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: #8A9296;
+  }
+  .bar-dual {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bar-dual .bar-track { flex: 1; }
+  .bar-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 12px;
+    color: #8A9296;
+    margin-bottom: 10px;
+  }
+  .bar-chart-legend span { display: flex; align-items: center; gap: 6px; }
+
+  /* ---------------- Pie chart (Cost impact: Category totals) ---------------- */
+  .pie-chart-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .pie-chart-wrap svg { flex-shrink: 0; }
+  .pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 160px;
+  }
+  .pie-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .pie-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .pie-legend-label {
+    flex: 1;
+    color: #E8ECEE;
+    text-transform: capitalize;
+  }
+  .pie-legend-value {
+    color: #8A9296;
+    white-space: nowrap;
+  }
+
+  /* ---------------- Complaint cards ---------------- */
+  .complaint-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .complaint-item-card {
+    background: #20262A;
+    border: 1px solid #2A3134;
+    border-left: 4px solid #8A9296;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .complaint-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .complaint-item-id {
+    font-size: 12px;
+    color: #8A9296;
+  }
+  .complaint-item-category {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E8ECEE;
+    margin-top: 2px;
+  }
+  .complaint-item-text {
+    font-size: 13px;
+    color: #E8ECEE;
+    margin: 0 0 8px;
+  }
+  .complaint-item-root {
+    font-size: 12px;
+    color: #8A9296;
+    margin-bottom: 4px;
+  }
+  .complaint-item-actions-label {
+    font-size: 12px;
+    color: #8A9296;
+    margin-bottom: 4px;
+  }
+  .complaint-item-status {
+    font-size: 12px;
+    color: #8A9296;
+    border-top: 1px solid #2A3134;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  /* ---------------- Scoped styles for the Construction Safety module ---------------- */
+  /* All original construction_safety_frontend.html rules are namespaced under #cs-app
+     so they never collide with the report-dashboard styles above (e.g. both files
+     originally defined a bare ".card" class with different designs). */
+  #cs-app { background: #f4f6f8; color: #1f2937; font-family: Arial, sans-serif; border-radius: 10px; padding: 0; }
+  #cs-app header {
+      background: #172033;
+      color: white;
+      padding: 22px 25px;
+      border-radius: 6px 6px 0 0;
+  }
+  #cs-app header h1 { margin: 0 0 6px; font-size: 22px; }
+  #cs-app header p { margin: 0; opacity: .8; font-size: 13px; }
+
+  #cs-app .container {
+      padding: 20px;
+  }
+
+  #cs-app .controls {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      margin-bottom: 20px;
+  }
+
+  #cs-app button, #cs-app .upload-label {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 17px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+      font-size: 14px;
+  }
+
+  #cs-app button { background: #2563eb; color: white; }
+  #cs-app button:hover { opacity: .9; background: #2563eb; }
+  #cs-app button.secondary { background: #4b5563; }
+  #cs-app button.danger { background: #dc2626; }
+  #cs-app button.success { background: #16a34a; }
+
+  #cs-app input[type=file] { display: none; }
+  #cs-app .upload-label {
+      display: inline-block;
+      background: #e5e7eb;
+      color: #111827;
+  }
+
+  #cs-app video, #cs-app #preview {
+      width: 100%;
+      max-height: 430px;
+      object-fit: contain;
+      background: #111827;
+      border-radius: 10px;
+      margin-top: 10px;
+  }
+
+  #cs-app #preview { display: none; }
+
+  #cs-app .status {
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-weight: bold;
+      display: none;
+  }
+  #cs-app .status.ok { background: #dcfce7; color: #166534; }
+  #cs-app .status.error { background: #fee2e2; color: #991b1b; }
+  #cs-app .status.loading { background: #dbeafe; color: #1e40af; }
+
+  #cs-app .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+  }
+
+  #cs-app .card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+
+  #cs-app .card h3 {
+      margin-top: 0;
+      color: #374151;
+  }
+
+  #cs-app .value {
+      font-size: 27px;
+      font-weight: bold;
+      margin-top: 8px;
+  }
+
+  #cs-app .safe { color: #16a34a; }
+  #cs-app .unsafe { color: #dc2626; }
+  #cs-app .warning { color: #d97706; }
+
+  #cs-app .worker {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 12px;
+      background: #fafafa;
+  }
+
+  #cs-app .worker h4 { margin: 0 0 10px; color: #1f2937; }
+
+  #cs-app .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+  }
+
+  #cs-app .row:last-child { border-bottom: 0; }
+
+  #cs-app .hidden { display: none !important; }
+
+  #cs-app .endpoint {
+      font-family: monospace;
+      background: #f3f4f6;
+      padding: 3px 6px;
+      border-radius: 4px;
+  }
+
+  #cs-app h2 { color: #1f2937; }
+
+  @media (max-width: 600px) {
+      #cs-app header { padding: 18px; }
+      #cs-app .container { padding: 0 12px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="sidebar-heading">Site Intelligence Dashboard</div>
+    <div class="sidebar-nav">
+      <button class="sidebar-link active" id="side-home" onclick="switchSidebar('home')">
+        <span class="sidebar-icon">🏠</span> Home
+      </button>
+      <button class="sidebar-link" id="side-weather-resource" onclick="switchSidebar('weather-resource')">
+        <span class="sidebar-icon">🌦️</span> Weather &amp; Resource Check
+      </button>
+      <button class="sidebar-link" id="side-safety" onclick="switchSidebar('safety')">
+        <span class="sidebar-icon">🦺</span> Safety Check
+      </button>
+      <button class="sidebar-link" id="side-schedule-cost" onclick="switchSidebar('schedule-cost')">
+        <span class="sidebar-icon">🗓️</span> Schedule &amp; Cost
+      </button>
+      <button class="sidebar-link" id="side-complaint-insurance" onclick="switchSidebar('complaint-insurance')">
+        <span class="sidebar-icon">📋</span> Complaint &amp; Insurance
+      </button>
+      <button class="sidebar-link" id="side-report" onclick="switchSidebar('report')">
+        <span class="sidebar-icon">📄</span> Report
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+<div class="wrap">
+  <div id="home-view">
+    <h1 class="home-title">Agentic AI for Safety Monitoring with Construction Risk Analytics</h1>
+
+    <div class="kpi-grid">
+
+      <div class="kpi-tile" onclick="switchSidebar('weather-resource')">
+        <div class="kpi-icon">🌦️</div>
+        <div class="kpi-label">Weather Risk</div>
+        <div class="kpi-value" id="kpi-weather-value">–</div>
+        <div class="kpi-sub" id="kpi-weather-sub">Loading…</div>
+      </div>
+
+      <div class="kpi-tile" onclick="switchSidebar('weather-resource')">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-label">Resource Availability</div>
+        <div class="kpi-value" id="kpi-resources-value">–</div>
+        <div class="kpi-sub" id="kpi-resources-sub">Loading…</div>
+      </div>
+
+      <div class="kpi-tile" onclick="switchSidebar('schedule-cost')">
+        <div class="kpi-icon">🗓️</div>
+        <div class="kpi-label">Schedule Delay</div>
+        <div class="kpi-value" id="kpi-schedule-value">–</div>
+        <div class="kpi-sub" id="kpi-schedule-sub">Loading…</div>
+      </div>
+
+      <div class="kpi-tile" onclick="switchSidebar('schedule-cost')">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Cost Impact</div>
+        <div class="kpi-value" id="kpi-cost-value">–</div>
+        <div class="kpi-sub" id="kpi-cost-sub">Loading…</div>
+      </div>
+
+      <div class="kpi-tile" onclick="switchSidebar('complaint-insurance')">
+        <div class="kpi-icon">📋</div>
+        <div class="kpi-label">Open Complaints</div>
+        <div class="kpi-value" id="kpi-complaints-value">–</div>
+        <div class="kpi-sub" id="kpi-complaints-sub">Loading…</div>
+      </div>
+
+      <div class="kpi-tile" onclick="switchSidebar('complaint-insurance')">
+        <div class="kpi-icon">🛡️</div>
+        <div class="kpi-label">Insurance Claims</div>
+        <div class="kpi-value" id="kpi-insurance-value">–</div>
+        <div class="kpi-sub" id="kpi-insurance-sub">Loading…</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div id="weather-resource-view" style="display:none;">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-weather" onclick="switchTab('weather')">Weather risk</button>
+    <button class="tab-btn" id="tab-resources" onclick="switchTab('resources')">Resource dashboard</button>
+  </div>
+
+  <div class="agent-pair">
+  <div class="card" id="card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+
+  <div class="card wide" id="resource-card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <div id="schedule-cost-view" style="display:none;">
+  <div class="tabs">
+    <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')">Schedule impact</button>
+    <button class="tab-btn" id="tab-cost" onclick="switchTab('cost')">Cost impact</button>
+  </div>
+
+  <div class="agent-pair">
+  <div class="card wide" id="schedule-card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+
+  <div class="card wide" id="cost-card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <div id="complaint-insurance-view" style="display:none;">
+  <div class="tabs">
+    <button class="tab-btn" id="tab-complaints" onclick="switchTab('complaints')">Complaints</button>
+    <button class="tab-btn" id="tab-insurance" onclick="switchTab('insurance')">Insurance claims</button>
+  </div>
+
+  <div class="agent-pair">
+  <div class="card wide" id="complaint-card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+
+  <div class="card wide" id="insurance-card">
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <div id="report-view" style="display:none;">
+  <div class="header" style="border-bottom:none; padding:4px 4px 12px;">
+    <h1>Site report — all agents</h1>
+    <div class="timestamp">Live visual summary across every agent</div>
+  </div>
+  <div class="report-grid" id="report-grid"></div>
+  </div>
+
+  <!-- ---------------- Construction Safety / Worker Protection module ---------------- -->
+  <div class="card wide" id="cs-app" style="display:none;">
+
+    <header>
+        <h1>Construction Safety Intelligence</h1>
+        <p>Safety Agent + Worker Protection Agent</p>
+    </header>
+
+    <div class="container">
+
+        <div class="controls">
+            <h2>Camera / Image Input</h2>
+
+            <button onclick="startCamera()">Start Camera</button>
+            <button class="secondary" onclick="stopCamera()">Stop Camera</button>
+            <button onclick="captureFrame()">Capture Frame</button>
+
+            <label class="upload-label">
+                Choose Image
+                <input type="file" id="imageInput" accept="image/*">
+            </label>
+
+            <br>
+
+            <video id="camera" autoplay playsinline></video>
+            <img id="preview" alt="Selected image preview">
+
+            <canvas id="canvas" class="hidden"></canvas>
+
+            <br>
+
+            <button class="success" onclick="runSafety()">Run Safety Agent</button>
+            <button class="success" onclick="runWorkerProtection()">Run Worker Protection</button>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <div id="safetySection" class="hidden">
+            <h2>Safety Agent Result</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>Overall Status</h3>
+                    <div id="safetyStatus" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Workers</h3>
+                    <div id="workerCount" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Helmet Violations</h3>
+                    <div id="helmetViolations" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Vest Violations</h3>
+                    <div id="vestViolations" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Total Violations</h3>
+                    <div id="totalViolations" class="value">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="protectionSection" class="hidden">
+            <h2>Worker Protection Result</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>Worker Status</h3>
+                    <div id="protectionStatus" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Risk Level</h3>
+                    <div id="riskLevel" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Workers Detected</h3>
+                    <div id="protectionWorkerCount" class="value">-</div>
+                </div>
+
+                <div class="card">
+                    <h3>Hazard Zone</h3>
+                    <div id="hazardWorkers" class="value">-</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>Recommended Action</h3>
+                <div id="recommendedAction" class="value" style="font-size:20px;">-</div>
+            </div>
+
+            <h3>Individual Worker Analysis</h3>
+            <div id="workersContainer"></div>
+        </div>
+
+    </div>
+  </div>
+  <!-- ---------------- End Construction Safety / Worker Protection module ---------------- -->
+
+
+</div>
+  </div>
+</div>
+
+<script>
+  const TAB_TO_SIDEBAR = {
+    weather: "weather-resource",
+    resources: "weather-resource",
+    schedule: "schedule-cost",
+    cost: "schedule-cost",
+    complaints: "complaint-insurance",
+    insurance: "complaint-insurance"
+  };
+
+  // Holds the latest data returned by every agent, keyed by agent name.
+  // The Report view reads from here to draw its visualizations, so each
+  // agent's render function stores its data here as soon as it loads.
+  const AGENT_DATA = {};
+
+  function updateSidebarActive(section) {
+    document.querySelectorAll(".sidebar-link").forEach(el => el.classList.remove("active"));
+    const target = document.getElementById("side-" + section);
+    if (target) target.classList.add("active");
+  }
+
+  // Exactly one of these seven top-level views is visible at a time:
+  // - "home": project title, KPI overview, and photo showcase landing page
+  // - "weather-resource": Weather + Resource agents, tiled to fit the screen
+  // - "schedule-cost": Schedule + Cost agents
+  // - "complaint-insurance": Complaint + Insurance agents
+  // - "safety": the Safety & Worker Protection agent, on its own
+  // - "report": visual summary of every agent
+  function showView(view) {
+    document.getElementById("home-view").style.display = view === "home" ? "flex" : "none";
+    document.getElementById("weather-resource-view").style.display = view === "weather-resource" ? "flex" : "none";
+    document.getElementById("schedule-cost-view").style.display = view === "schedule-cost" ? "flex" : "none";
+    document.getElementById("complaint-insurance-view").style.display = view === "complaint-insurance" ? "flex" : "none";
+    document.getElementById("report-view").style.display = view === "report" ? "flex" : "none";
+    document.getElementById("cs-app").style.display = view === "safety" ? "block" : "none";
+  }
+
+  function switchSidebar(section) {
+    updateSidebarActive(section);
+    showView(section);
+    if (section === "report") renderReportVisuals();
+  }
+
+</script>
+
+<script>
+  // Shared skeleton placeholder shown while any agent card is (re)loading,
+  // instead of plain "Loading..." text. Also used as the fallback UI if a
+  // fetch is retried after failing.
+  const SKELETON_HTML = `
+    <div class="skeleton-block">
+      <div class="skeleton-line w-40 tall"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-60"></div>
+    </div>`;
+
+  // Wraps fetch() with a timeout so one slow/hung agent endpoint can't spin
+  // its card forever - it fails fast and falls back to the existing
+  // error-state + retry button instead.
+  async function fetchWithTimeout(url, timeoutMs = 6000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { signal: controller.signal });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Schedule and cost reports were timing out on first load (working only
+  // after the user pressed "Retry"). That's because all 6 agent requests
+  // fire at once on page load, and schedule/cost are the two heaviest to
+  // compute on the backend - they were still queued/processing when the
+  // original 6s timeout hit. This wraps a longer timeout with one silent
+  // automatic retry, so a slow-but-healthy first attempt gets a second
+  // chance before showing the user an error card.
+  async function fetchWithRetry(url, { timeoutMs = 15000, retries = 1, retryDelayMs = 1500 } = {}) {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetchWithTimeout(url, timeoutMs);
+        if (!res.ok) throw new Error("Server responded with " + res.status);
+        return res;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < retries) await new Promise(r => setTimeout(r, retryDelayMs));
+      }
+    }
+    throw lastErr;
+  }
+
+  // const API_URL = "http://localhost:8000/api/site-risk";
+
+  const API_URL = "/api/site-risk"
+
+  function riskClass(status) {
+    if (status === "LOW") return "risk-low";
+    if (status === "MODERATE") return "risk-moderate";
+    if (status === "CRITICAL") return "risk-critical";
+    return "risk-error";
+  }
+
+  function riskColor(status) {
+    if (status === "LOW") return "#4CAF6D";
+    if (status === "MODERATE") return "#F2A93B";
+    if (status === "CRITICAL") return "#E5484D";
+    return "#8A9296";
+  }
+
+  function donutHTML(score, status) {
+    const clamped = Math.max(0, Math.min(100, Number(score) || 0));
+    const r = 54;
+    const circumference = 2 * Math.PI * r;
+    const dash = (clamped / 100) * circumference;
+    const color = riskColor(status);
+    return `
+      <div class="donut-wrap">
+        <div class="donut">
+          <svg viewBox="0 0 140 140">
+            <circle class="donut-track" cx="70" cy="70" r="${r}" fill="none" stroke-width="14"/>
+            <circle class="donut-arc" cx="70" cy="70" r="${r}" fill="none" stroke="${color}"
+              stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="${dash} ${circumference}"
+              transform="rotate(-90 70 70)"/>
+          </svg>
+          <div class="donut-label">
+            <div class="donut-score">${Number.isFinite(Number(score)) ? score : "-"}</div>
+            <div class="donut-total">/ 100</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function loadReport() {
+    const card = document.getElementById("card");
+    try {
+      const res = await fetchWithTimeout(API_URL);
+      if (!res.ok) throw new Error("Server responded with " + res.status);
+      const data = await res.json();
+      render(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the weather agent.<br>${err.message}
+          <br><button onclick="loadReport()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function render(data) {
+    const card = document.getElementById("card");
+    const now = new Date().toLocaleString();
+
+    let findingsHTML = "";
+    let actionsHTML = "";
+    let optimalHTML = "";
+
+    if (data.findings && data.findings.length > 0) {
+      findingsHTML = `
+        <div class="section">
+          <h2>AI findings</h2>
+          <ul class="findings">
+            ${data.findings.map(f => `<li>${f}</li>`).join("")}
+          </ul>
+        </div>`;
+      actionsHTML = `
+        <div class="section">
+          <h2>Required actions</h2>
+          <ul class="actions">
+            ${data.actions.map(a => `<li>${a}</li>`).join("")}
+          </ul>
+        </div>`;
+    } else {
+      optimalHTML = `<div class="optimal">Site conditions are optimal for all construction activities.</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="header">
+        <h1>Site weather intelligence report</h1>
+        <div class="timestamp">Generated ${now}</div>
+      </div>
+      <div class="risk-row">
+        <div>
+          <div class="risk-label">Overall risk level</div>
+          <div class="risk-value ${riskClass(data.status)}">${data.status}</div>
+        </div>
+        <div class="risk-score">${data.score ?? "-"} / 100</div>
+      </div>
+      ${donutHTML(data.score, data.status)}
+      <div class="metrics">
+        <div class="metric">
+          <div class="icon">🌡️</div>
+          <div class="value">${data.temp ?? "-"}°C</div>
+          <div class="label">Temperature</div>
+        </div>
+        <div class="metric">
+          <div class="icon">💨</div>
+          <div class="value">${data.wind ?? "-"}</div>
+          <div class="label">Wind km/h</div>
+        </div>
+        <div class="metric">
+          <div class="icon">🌧️</div>
+          <div class="value">${data.rain_prob ?? "-"}%</div>
+          <div class="label">Rain forecast</div>
+        </div>
+      </div>
+      ${findingsHTML}
+      ${actionsHTML}
+      ${optimalHTML}
+    `;
+
+    updateWeatherKPI(data);
+    AGENT_DATA.weather = data;
+    renderReportVisuals();
+  }
+
+  function updateWeatherKPI(data) {
+    const valueEl = document.getElementById("kpi-weather-value");
+    const subEl = document.getElementById("kpi-weather-sub");
+    if (!valueEl) return;
+    valueEl.textContent = data.score ?? "-";
+    valueEl.className = "kpi-value " + riskClass(data.status);
+    subEl.textContent = data.status ?? "-";
+  }
+
+  // ---------------- Tabs ----------------
+  // The six report agents are all tiled on screen at once, so the tab bar
+  // no longer hides/shows or scrolls to cards - it just highlights the
+  // chosen agent's tile for a moment so it's easy to spot.
+  const TAB_CARD_IDS = {
+    weather: "card",
+    resources: "resource-card",
+    schedule: "schedule-card",
+    cost: "cost-card",
+    complaints: "complaint-card",
+    insurance: "insurance-card"
+  };
+
+  function switchTab(tab) {
+    if (TAB_TO_SIDEBAR[tab]) showView(TAB_TO_SIDEBAR[tab]);
+    Object.keys(TAB_CARD_IDS).forEach(key => {
+      const btn = document.getElementById("tab-" + key);
+      if (btn) btn.classList.toggle("active", key === tab);
+    });
+    const target = document.getElementById(TAB_CARD_IDS[tab]);
+    if (target) {
+      target.classList.add("agent-highlight");
+      setTimeout(() => target.classList.remove("agent-highlight"), 900);
+    }
+    if (TAB_TO_SIDEBAR[tab]) updateSidebarActive(TAB_TO_SIDEBAR[tab]);
+  }
+
+  // ---------------- Resource dashboard ----------------
+  // const RESOURCE_API_URL = "http://localhost:8000/api/resource-dashboard";
+  const RESOURCE_API_URL = "/api/resource-dashboard"
+
+  function statusClass(status) {
+    if (status === "Available") return "status-available";
+    if (status === "Partially Available") return "status-partial";
+    return "status-unavailable";
+  }
+  function riskClassTag(risk) {
+    if (risk === "Low") return "risk-tag-low";
+    if (risk === "Medium") return "risk-tag-medium";
+    return "risk-tag-high";
+  }
+
+  function progressBarColor(pct) {
+    if (pct >= 80) return "#4CAF6D";
+    if (pct >= 50) return "#F2A93B";
+    return "#E5484D";
+  }
+
+  function progressBarHTML(pct, width) {
+    const w = width ? `style="width:${width}px;"` : "";
+    const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+    return `
+      <div class="progress-bar-wrap" ${w}>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width:${clamped}%; background:${progressBarColor(clamped)};"></div>
+        </div>
+        <div class="progress-bar-label">${pct}%</div>
+      </div>`;
+  }
+
+  async function loadResourceDashboard() {
+    const card = document.getElementById("resource-card");
+    card.innerHTML = SKELETON_HTML;
+    try {
+      const res = await fetchWithTimeout(RESOURCE_API_URL);
+      if (!res.ok) throw new Error("Server responded with " + res.status);
+      const data = await res.json();
+      renderResourceDashboard(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the resource agent.<br>${err.message}
+          <br><button onclick="loadResourceDashboard()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function resourceSection(title, metrics, kind) {
+    const rows = metrics.zone_availability.map(z => {
+      if (kind === "labour") {
+        return `<tr>
+          <td>${z.Zone}</td><td>${z.Available_Labour}</td><td>${z.Required_Labour}</td>
+          <td>${progressBarHTML(z["Availability_%"])}</td><td>${z.Shortage}</td>
+          <td class="${statusClass(z.Zone_Status)}">${z.Zone_Status}</td>
+        </tr>`;
+      }
+      if (kind === "equipment") {
+        return `<tr>
+          <td>${z.Zone}</td><td>${z.Available_Quantity}</td><td>${z.Required_Quantity}</td>
+          <td>${progressBarHTML(z["Availability_%"])}</td><td>${z.Shortage}</td><td>${z.Under_Maintenance}</td>
+          <td class="${riskClassTag(z.Risk)}">${z.Risk}</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td>${z.Zone}</td><td>${z.Available_Quantity}</td><td>${z.Required_Quantity}</td>
+        <td>${progressBarHTML(z["Availability_%"])}</td><td>${z.Shortage}</td>
+        <td class="${statusClass(z.Zone_Status)}">${z.Zone_Status}</td>
+      </tr>`;
+    }).join("");
+
+    const headers = kind === "equipment"
+      ? `<tr><th>Zone</th><th>Available</th><th>Required</th><th style="min-width:120px;">Avail %</th><th>Shortage</th><th>Under maint.</th><th>Risk</th></tr>`
+      : `<tr><th>Zone</th><th>Available</th><th>Required</th><th style="min-width:120px;">Avail %</th><th>Shortage</th><th>Status</th></tr>`;
+
+    const overallRisk = kind === "equipment"
+      ? `<span class="${riskClassTag(metrics.overall_risk)}">${metrics.overall_risk}</span>`
+      : "";
+
+    return `
+      <div class="section">
+        <h2>${title}</h2>
+        <div class="resource-summary">
+          <span>Available: <strong>${metrics.total_available}</strong> / Required: <strong>${metrics.total_required}</strong></span>
+          <span style="display:flex; align-items:center; gap:6px;">Avail %: ${progressBarHTML(metrics.availability_pct, 100)}</span>
+          <span>Shortage: <strong>${metrics.shortage}</strong></span>
+          ${overallRisk ? `<span>Risk: <strong>${metrics.overall_risk}</strong></span>` : ""}
+        </div>
+        <table>
+          <thead>${headers}</thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderResourceDashboard(data) {
+    const card = document.getElementById("resource-card");
+    card.innerHTML = `
+      <div class="header">
+        <h1>Resource dashboard</h1>
+        <div class="timestamp">Refreshed ${data.timestamp}</div>
+      </div>
+      ${resourceSection("Labour", data.labour, "labour")}
+      ${resourceSection("Equipment", data.equipment, "equipment")}
+      ${resourceSection("Material", data.material, "material")}
+    `;
+
+    updateResourcesKPI(data);
+    AGENT_DATA.resource = data;
+    renderReportVisuals();
+  }
+
+  function updateResourcesKPI(data) {
+    const valueEl = document.getElementById("kpi-resources-value");
+    const subEl = document.getElementById("kpi-resources-sub");
+    if (!valueEl) return;
+    const pcts = [data.labour, data.equipment, data.material]
+      .map(m => Number(m.availability_pct) || 0);
+    const avgPct = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+    const totalShortage = [data.labour, data.equipment, data.material]
+      .reduce((s, m) => s + (Number(m.shortage) || 0), 0);
+    valueEl.textContent = avgPct + "%";
+    valueEl.style.color = progressBarColor(avgPct);
+    subEl.textContent = `Shortage: ${totalShortage} across labour/equipment/material`;
+  }
+
+  // ---------------- Schedule report ----------------
+  // const SCHEDULE_API_URL = "http://localhost:8000/api/schedule-report";
+  const SCHEDULE_API_URL = "/api/schedule-report";
+
+  async function loadScheduleReport() {
+    const card = document.getElementById("schedule-card");
+    card.innerHTML = SKELETON_HTML;
+    try {
+      const res = await fetchWithRetry(SCHEDULE_API_URL);
+      const data = await res.json();
+      renderScheduleReport(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the schedule agent.<br>${err.message}
+          <br><button onclick="loadScheduleReport()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function delayTag(isDelayed) {
+    return isDelayed
+      ? `<span class="delay-yes">Delayed</span>`
+      : `<span class="delay-no">On track</span>`;
+  }
+
+  function taskSection(t) {
+    return `
+      <div class="section">
+        <h2>${t.zone} — task ${t.task_id}</h2>
+        <div class="resource-summary">
+          <span>Weather risk: <strong>${t.weather.risk_status}${t.weather.risk_score !== null ? " (" + t.weather.risk_score + "/100)" : ""}</strong></span>
+          <span>${delayTag(t.combined.will_be_delayed)}</span>
+          <span>Total delay: <strong>${t.combined.total_delay_days}</strong> day(s)</span>
+        </div>
+        <ul>
+          <li><strong>Weather:</strong> ${t.weather.reason}</li>
+          <li><strong>Resources:</strong> ${t.resource.reason}</li>
+        </ul>
+      </div>`;
+  }
+
+  // items: [{ label, a, aText, b, bText }]
+  // Draws two bars side by side for each label (e.g. weather % next to
+  // resource-days), each on its own independent scale, under one shared row.
+  function dualBarChartHTML(items, colorA, colorB) {
+    const maxA = Math.max(1, ...items.map(i => Number(i.a) || 0));
+    const maxB = Math.max(1, ...items.map(i => Number(i.b) || 0));
+    const rows = items.map(it => {
+      const pctA = Math.max(2, Math.min(100, (Number(it.a) || 0) / maxA * 100));
+      const pctB = Math.max(2, Math.min(100, (Number(it.b) || 0) / maxB * 100));
+      return `
+        <div class="bar-row">
+          <div class="bar-label">${it.label}</div>
+          <div class="bar-dual">
+            <div class="bar-track"><div class="bar-fill" style="width:${pctA}%; background:${colorA};"></div></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pctB}%; background:${colorB};"></div></div>
+          </div>
+          <div class="bar-value">${it.aText}<span class="bar-note">${it.bText}</span></div>
+        </div>`;
+    }).join("");
+    return `<div class="bar-chart">${rows}</div>`;
+  }
+
+  function renderScheduleReport(data) {
+    const card = document.getElementById("schedule-card");
+
+    const zoneRiskItems = data.tasks.map(t => ({
+      label: t.zone,
+      a: t.weather.risk_score ?? 0,
+      aText: t.weather.risk_score === null ? "no data" : `${t.weather.risk_score}%`,
+      b: t.resource.delay_days ?? 0,
+      bText: `${t.resource.delay_days ?? 0}d`
+    }));
+
+    const summaryPieItems = data.summary.map(s => ({
+      label: s.zone,
+      value: s.total_delay_days
+    }));
+
+    card.innerHTML = `
+      <div class="header">
+        <h1>Schedule impact report</h1>
+        <div class="timestamp">Combines live weather risk and live resource data per zone</div>
+      </div>
+      <div class="section">
+        <h2>Weather &amp; resource risk by zone</h2>
+        <div class="bar-chart-legend">
+          <span><span class="pie-swatch" style="background:#4C8CF2;"></span>Weather risk (%)</span>
+          <span><span class="pie-swatch" style="background:#F2A93B;"></span>Resource risk (days)</span>
+        </div>
+        ${dualBarChartHTML(zoneRiskItems, "#4C8CF2", "#F2A93B")}
+      </div>
+      ${data.tasks.map(taskSection).join("")}
+      <div class="section">
+        <h2>Site-wide summary</h2>
+        ${pieChartHTML(summaryPieItems, v => `${v} day(s)`)}
+      </div>
+    `;
+
+    updateScheduleKPI(data);
+    AGENT_DATA.schedule = data;
+    renderReportVisuals();
+  }
+
+  function updateScheduleKPI(data) {
+    const valueEl = document.getElementById("kpi-schedule-value");
+    const subEl = document.getElementById("kpi-schedule-sub");
+    if (!valueEl) return;
+    const totalDelay = (data.summary || []).reduce((s, z) => s + (Number(z.total_delay_days) || 0), 0);
+    const delayedCount = (data.tasks || []).filter(t => t.combined.will_be_delayed).length;
+    valueEl.textContent = totalDelay + "d";
+    valueEl.className = "kpi-value " + (totalDelay > 0 ? "risk-critical" : "risk-low");
+    subEl.textContent = `${delayedCount} of ${data.tasks.length} task(s) delayed`;
+  }
+
+  // ---------------- Cost report ----------------
+  // const COST_API_URL = "http://localhost:8000/api/cost-report";
+  const COST_API_URL = "/api/cost-report";
+
+  async function loadCostReport() {
+    const card = document.getElementById("cost-card");
+    card.innerHTML = SKELETON_HTML;
+    try {
+      const res = await fetchWithRetry(COST_API_URL);
+      const data = await res.json();
+      renderCostReport(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the cost agent.<br>${err.message}
+          <br><button onclick="loadCostReport()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function fmtMoney(amount, currency) {
+    if (amount === null || amount === undefined) return "N/A";
+    return `${amount.toLocaleString()} ${currency}`;
+  }
+
+  // ---------------- Reusable charts (horizontal bar + pie) ----------------
+  const CHART_COLORS = ["#4C8CF2", "#4CAF6D", "#F2A93B", "#E5484D", "#9B59B6", "#00BCD4", "#FF7F50", "#B9C4DE"];
+
+  // items: [{ label, value, note? }]
+  // formatValue: (value) => string, used to render the number next to each bar
+  // thick: when true, draws a taller/thicker bar track
+  function horizontalBarChartHTML(items, formatValue, thick) {
+    const fmt = formatValue || (v => String(v));
+    const max = Math.max(1, ...items.map(i => Number(i.value) || 0));
+    const rows = items.map((it, idx) => {
+      const val = Number(it.value) || 0;
+      const pct = Math.max(2, Math.min(100, (val / max) * 100));
+      const color = CHART_COLORS[idx % CHART_COLORS.length];
+      return `
+        <div class="bar-row">
+          <div class="bar-label">${it.label}</div>
+          <div class="bar-track${thick ? " thick" : ""}">
+            <div class="bar-fill" style="width:${pct}%; background:${color};"></div>
+          </div>
+          <div class="bar-value">${fmt(val)}${it.note ? `<span class="bar-note">${it.note}</span>` : ""}</div>
+        </div>`;
+    }).join("");
+    return `<div class="bar-chart">${rows}</div>`;
+  }
+
+  // items: [{ label, value }]
+  // formatValue: (value) => string, used to render each legend value
+  function pieChartHTML(items, formatValue, colors) {
+    const fmt = formatValue || (v => String(v));
+    const palette = colors || CHART_COLORS;
+    const total = items.reduce((s, i) => s + (Number(i.value) || 0), 0) || 1;
+    const nonZero = items.filter(i => (Number(i.value) || 0) > 0);
+    const cx = 80, cy = 80, r = 70;
+    let svgSlices;
+    if (nonZero.length <= 1) {
+      const idx = items.findIndex(i => (Number(i.value) || 0) > 0);
+      const color = palette[Math.max(0, idx) % palette.length];
+      svgSlices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"></circle>`;
+    } else {
+      let angleStart = -90;
+      svgSlices = items.map((it, idx) => {
+        const val = Number(it.value) || 0;
+        const angle = (val / total) * 360;
+        if (angle <= 0) return "";
+        const angleEnd = angleStart + angle;
+        const largeArc = angle > 180 ? 1 : 0;
+        const startRad = (Math.PI / 180) * angleStart;
+        const endRad = (Math.PI / 180) * angleEnd;
+        const x1 = (cx + r * Math.cos(startRad)).toFixed(2);
+        const y1 = (cy + r * Math.sin(startRad)).toFixed(2);
+        const x2 = (cx + r * Math.cos(endRad)).toFixed(2);
+        const y2 = (cy + r * Math.sin(endRad)).toFixed(2);
+        const color = palette[idx % palette.length];
+        angleStart = angleEnd;
+        return `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" stroke="#1E2427" stroke-width="1"></path>`;
+      }).join("");
+    }
+    const legend = items.map((it, idx) => {
+      const val = Number(it.value) || 0;
+      const pct = ((val / total) * 100).toFixed(1);
+      return `
+        <div class="pie-legend-row">
+          <span class="pie-swatch" style="background:${palette[idx % palette.length]};"></span>
+          <span class="pie-legend-label">${it.label}</span>
+          <span class="pie-legend-value">${fmt(val)} (${pct}%)</span>
+        </div>`;
+    }).join("");
+    return `
+      <div class="pie-chart-wrap">
+        <svg viewBox="0 0 160 160" width="150" height="150">${svgSlices}</svg>
+        <div class="pie-legend">${legend}</div>
+      </div>`;
+  }
+
+  function costZoneSection(t, currency) {
+    const rows = [
+      ["Delay cost", t.cost_breakdown.delay_cost],
+      ["Labor cost", t.cost_breakdown.labor_cost],
+      ["Equipment cost", t.cost_breakdown.equipment_cost],
+      ["Material cost", t.cost_breakdown.material_cost],
+    ].map(([label, c]) => `
+      <tr>
+        <td>${label}</td>
+        <td>${fmtMoney(c.amount, currency)}</td>
+        <td class="warn-text">${c.basis}</td>
+      </tr>`).join("");
+
+    const risk = t.cost_breakdown.subcontractor_risk;
+
+    return `
+      <div class="section">
+        <h2>${t.zone ?? t.task_id}</h2>
+        <div class="resource-summary">
+          <span>Total impact: <strong>${fmtMoney(t.total_estimated_cost_impact, currency)}</strong></span>
+          <span>Confidence: <strong>${t.data_confidence}</strong></span>
+        </div>
+        <table>
+          <thead><tr><th>Category</th><th>Amount</th><th>Basis</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="resource-summary" style="margin-top:10px;">
+          <span>Subcontractor: score=${risk.score} ${risk.flag ? '<span class="delay-yes">flagged</span>' : '<span class="delay-no">ok</span>'}</span>
+        </div>
+        ${t.warnings && t.warnings.length ? `<ul>${t.warnings.map(w => `<li class="warn-text">${w}</li>`).join("")}</ul>` : ""}
+      </div>`;
+  }
+
+  function renderCostReport(data) {
+    const card = document.getElementById("cost-card");
+
+    const zoneBarItems = data.zone_summary.map(z => ({
+      label: z.zone,
+      value: z.total_estimated_cost_impact,
+      note: z.data_confidence ? `${z.data_confidence} confidence` : ""
+    }));
+
+    const categoryPieItems = Object.entries(data.category_totals).map(([key, val]) => ({
+      label: key.replace(/_/g, " "),
+      value: val
+    }));
+
+    card.innerHTML = `
+      <div class="header">
+        <h1>Cost impact report</h1>
+        <div class="timestamp">Delay, labor, equipment, and material cost exposure per zone</div>
+      </div>
+      <div class="section">
+        <h2>Site-wide summary</h2>
+        ${horizontalBarChartHTML(zoneBarItems, v => fmtMoney(v, data.currency))}
+      </div>
+      ${data.tasks.map((t, i) => costZoneSection({ ...t, zone: data.zone_summary[i]?.zone ?? t.task_id }, data.currency)).join("")}
+      <div class="section">
+        <h2>Category totals</h2>
+        ${pieChartHTML(categoryPieItems, v => fmtMoney(v, data.currency))}
+        <div class="resource-summary" style="margin-top:10px;">
+          <span>Site total: <strong>${fmtMoney(data.site_total, data.currency)}</strong></span>
+        </div>
+      </div>
+    `;
+
+    updateCostKPI(data);
+    AGENT_DATA.cost = data;
+    renderReportVisuals();
+  }
+
+  function updateCostKPI(data) {
+    const valueEl = document.getElementById("kpi-cost-value");
+    const subEl = document.getElementById("kpi-cost-sub");
+    if (!valueEl) return;
+    valueEl.textContent = fmtMoney(data.site_total, data.currency);
+    subEl.textContent = `${data.tasks.length} zone(s) tracked`;
+  }
+
+  // ---------------- Complaint report ----------------
+  // const COMPLAINT_API_URL = "http://localhost:8000/api/complaint-report";
+  const COMPLAINT_API_URL = "/api/complaint-report";
+
+  async function loadComplaintReport() {
+    const card = document.getElementById("complaint-card");
+    card.innerHTML = SKELETON_HTML;
+    try {
+      const res = await fetchWithTimeout(COMPLAINT_API_URL);
+      if (!res.ok) throw new Error("Server responded with " + res.status);
+      const data = await res.json();
+      renderComplaintReport(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the complaint agent.<br>${err.message}
+          <br><button onclick="loadComplaintReport()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function severityClass(severity) {
+    const s = (severity || "").toLowerCase();
+    if (s === "critical" || s === "high") return "severity-" + s;
+    if (s === "medium") return "severity-medium";
+    return "severity-low";
+  }
+
+  function priorityColorFor(severity) {
+    const s = (severity || "").toLowerCase();
+    if (s === "critical") return "#E5484D";
+    if (s === "high") return "#FF7F50";
+    if (s === "medium") return "#F2A93B";
+    return "#4CAF6D";
+  }
+
+  function complaintCard(c) {
+    return `
+      <div class="complaint-item-card" style="border-left-color:${priorityColorFor(c.severity)};">
+        <div class="complaint-item-header">
+          <div>
+            <div class="complaint-item-id">${c.complaint_id} &middot; ${c.location}</div>
+            <div class="complaint-item-category">${c.category}</div>
+          </div>
+          <span class="priority-tag ${severityClass(c.severity)}">${c.severity}</span>
+        </div>
+        <p class="complaint-item-text">${c.complaint}</p>
+        <div class="complaint-item-root"><strong>Root cause:</strong> ${c.root_cause}</div>
+        <div class="resource-summary" style="margin:10px 0;">
+          <span>Workers: <strong>${c.affected_workers}</strong></span>
+          <span>Schedule: <strong>${c.schedule_impact}</strong></span>
+          <span>Cost: <strong>${c.estimated_cost_impact}</strong></span>
+        </div>
+        <div class="complaint-item-actions-label">Recommended actions</div>
+        <ul class="actions">
+          ${c.recommended_actions.map(a => `<li>${a}</li>`).join("")}
+        </ul>
+        <div class="complaint-item-status">Status: <strong>${c.status}</strong></div>
+      </div>`;
+  }
+
+  function updateComplaintsKPI(data) {
+    const valueEl = document.getElementById("kpi-complaints-value");
+    const subEl = document.getElementById("kpi-complaints-sub");
+    if (!valueEl) return;
+    const complaints = data.complaints || [];
+    const severe = complaints.filter(c => ["CRITICAL", "HIGH"].includes((c.severity || "").toUpperCase())).length;
+    valueEl.textContent = complaints.length;
+    valueEl.className = "kpi-value " + (severe > 0 ? "risk-critical" : complaints.length > 0 ? "risk-moderate" : "risk-low");
+    subEl.textContent = complaints.length === 0 ? "No open complaints" : `${severe} critical/high severity`;
+  }
+
+  function renderComplaintReport(data) {
+    const card = document.getElementById("complaint-card");
+    updateComplaintsKPI(data);
+    AGENT_DATA.complaint = data;
+    renderReportVisuals();
+    if (!data.complaints || data.complaints.length === 0) {
+      card.innerHTML = `
+        <div class="header">
+          <h1>Complaints</h1>
+          <div class="timestamp">Refreshed ${data.timestamp}</div>
+        </div>
+        <div class="optimal">No open complaints on site.</div>`;
+      return;
+    }
+
+    const severityOrder = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+    const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    data.complaints.forEach(c => {
+      const s = (c.severity || "").toUpperCase();
+      counts[s] = (counts[s] ?? 0) + 1;
+    });
+    const priorityItems = severityOrder
+      .filter(s => counts[s] !== undefined)
+      .map(s => ({ label: s.charAt(0) + s.slice(1).toLowerCase(), value: counts[s] }));
+    const priorityColors = ["#E5484D", "#FF7F50", "#F2A93B", "#4CAF6D"];
+
+    card.innerHTML = `
+      <div class="header">
+        <h1>Complaints</h1>
+        <div class="timestamp">Refreshed ${data.timestamp}</div>
+      </div>
+      <div class="complaint-grid">
+        ${data.complaints.map(complaintCard).join("")}
+      </div>
+      <div class="section">
+        <h2>Priority distribution</h2>
+        ${pieChartHTML(priorityItems, v => `${v}`, priorityColors)}
+      </div>
+    `;
+  }
+
+  // ---------------- Insurance report ----------------
+  // const INSURANCE_API_URL = "http://localhost:8000/api/insurance-report";
+  const INSURANCE_API_URL = "/api/insurance-report";
+
+  async function loadInsuranceReport() {
+    const card = document.getElementById("insurance-card");
+    card.innerHTML = SKELETON_HTML;
+    try {
+      const res = await fetchWithTimeout(INSURANCE_API_URL);
+      if (!res.ok) throw new Error("Server responded with " + res.status);
+      const data = await res.json();
+      renderInsuranceReport(data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="error-state">
+          Could not reach the insurance agent.<br>${err.message}
+          <br><button onclick="loadInsuranceReport()">Retry</button>
+        </div>`;
+    }
+  }
+
+  function priorityClass(priority) {
+    const p = (priority || "").toLowerCase();
+    if (p === "urgent") return "priority-urgent";
+    if (p === "high") return "priority-high";
+    if (p === "standard") return "priority-standard";
+    return "priority-low";
+  }
+
+  function ticketPriorityColor(priority) {
+    const p = (priority || "").toUpperCase();
+    if (p === "URGENT") return "#E5484D";
+    if (p === "HIGH") return "#FF7F50";
+    if (p === "STANDARD") return "#F2A93B";
+    return "#4CAF6D";
+  }
+
+  function ticketCard(c) {
+    const ticketId = c.ticket_id || `INS-${c.complaint_id}`;
+    return `
+      <div class="ticket-item-card" style="border-left-color:${ticketPriorityColor(c.claim_priority)};">
+        <div class="ticket-item-header">
+          <div>
+            <div class="ticket-item-id">${ticketId} &middot; ${c.location}</div>
+            <div class="ticket-item-category">${c.category}</div>
+          </div>
+          <span class="priority-tag ${priorityClass(c.claim_priority)}">${c.claim_priority}</span>
+        </div>
+        <p class="ticket-item-text">${c.root_cause}</p>
+        <div class="ticket-item-root"><strong>Policy:</strong> ${c.policy_name} (${c.policy_number}) — ${c.insurer}</div>
+        <div class="resource-summary" style="margin:10px 0;">
+          <span>Coverage: <strong>${c.coverage_status.replace(/_/g, " ")}</strong></span>
+          <span>Claimable: <strong>${c.claimable_amount}</strong></span>
+          <span>Deadline: <strong>${c.filing_deadline}</strong></span>
+        </div>
+        <div class="ticket-item-actions-label">Recommended actions</div>
+        <ul class="actions">
+          ${c.recommended_actions.map(a => `<li>${a}</li>`).join("")}
+        </ul>
+        <div class="ticket-item-status">Status: <strong>${c.status.replace(/_/g, " ")}</strong></div>
+      </div>`;
+  }
+
+  function updateInsuranceKPI(data) {
+    const valueEl = document.getElementById("kpi-insurance-value");
+    const subEl = document.getElementById("kpi-insurance-sub");
+    if (!valueEl) return;
+    const claims = data.claims || [];
+    const urgent = claims.filter(c => (c.claim_priority || "").toUpperCase() === "URGENT").length;
+    valueEl.textContent = claims.length;
+    valueEl.className = "kpi-value " + (urgent > 0 ? "risk-critical" : claims.length > 0 ? "risk-moderate" : "risk-low");
+    subEl.textContent = claims.length === 0 ? "No open claims" : `${urgent} urgent`;
+  }
+
+  function renderInsuranceReport(data) {
+    const card = document.getElementById("insurance-card");
+    updateInsuranceKPI(data);
+    AGENT_DATA.insurance = data;
+    renderReportVisuals();
+    if (!data.claims || data.claims.length === 0) {
+      card.innerHTML = `
+        <div class="header">
+          <h1>Insurance claims</h1>
+          <div class="timestamp">Refreshed ${data.timestamp}</div>
+        </div>
+        <div class="optimal">No open claims — no incidents require insurance filing.</div>`;
+      return;
+    }
+
+    card.innerHTML = `
+      <div class="header">
+        <h1>Insurance claims</h1>
+        <div class="timestamp">Refreshed ${data.timestamp}</div>
+      </div>
+      <div class="ticket-grid">
+        ${data.claims.map(ticketCard).join("")}
+      </div>
+    `;
+  }
+
+  // ---------------- Report view: one visualization per agent ----------------
+  function reportPlaceholder(title, msg) {
+    return `
+      <div class="report-card">
+        <div class="report-card-title">${title}</div>
+        <div class="loading" style="padding:20px 0;">${msg}</div>
+      </div>`;
+  }
+
+  function reportWeatherCard() {
+    const d = AGENT_DATA.weather;
+    if (!d) return reportPlaceholder("🌦️ Weather Risk", "Loading weather data…");
+    return `
+      <div class="report-card">
+        <div class="report-card-title">🌦️ Weather Risk</div>
+        ${donutHTML(d.score, d.status)}
+        <div class="risk-row" style="border:none; padding:0; margin-top:6px;">
+          <div>
+            <div class="risk-label">Status</div>
+            <div class="risk-value ${riskClass(d.status)}">${d.status ?? "-"}</div>
+          </div>
+          <div class="risk-score">${d.score ?? "-"} / 100</div>
+        </div>
+      </div>`;
+  }
+
+  function reportResourceCard() {
+    const d = AGENT_DATA.resource;
+    if (!d) return reportPlaceholder("📦 Resource Availability", "Loading resource data…");
+    const items = [
+      { label: "Labour", value: d.labour.availability_pct },
+      { label: "Equipment", value: d.equipment.availability_pct },
+      { label: "Material", value: d.material.availability_pct }
+    ];
+    return `
+      <div class="report-card">
+        <div class="report-card-title">📦 Resource Availability</div>
+        ${horizontalBarChartHTML(items, v => v + "%", true)}
+      </div>`;
+  }
+
+  function reportSafetyCard() {
+    const d = AGENT_DATA.safety;
+    if (!d) return reportPlaceholder("🦺 Safety Status", "Awaiting a safety scan…");
+    const text = String(d.status || "-").toUpperCase();
+    let cls = "risk-moderate";
+    if (text.includes("SAFE") || text.includes("LOW") || text.includes("NONE")) cls = "risk-low";
+    else if (text.includes("UNSAFE") || text.includes("HIGH") || text.includes("CRITICAL")) cls = "risk-critical";
+    return `
+      <div class="report-card">
+        <div class="report-card-title">🦺 Safety Status</div>
+        <div class="risk-row" style="border:none; padding:0;">
+          <div>
+            <div class="risk-label">Latest scan</div>
+            <div class="risk-value ${cls}">${d.status ?? "-"}</div>
+          </div>
+          <div class="risk-score">${d.detail ?? ""}</div>
+        </div>
+      </div>`;
+  }
+
+  function reportScheduleCard() {
+    const d = AGENT_DATA.schedule;
+    if (!d) return reportPlaceholder("🗓️ Schedule Delay", "Loading schedule data…");
+    const items = (d.summary || []).map(s => ({ label: s.zone, value: s.total_delay_days }));
+    return `
+      <div class="report-card">
+        <div class="report-card-title">🗓️ Schedule Delay by Zone</div>
+        ${pieChartHTML(items, v => `${v} day(s)`)}
+      </div>`;
+  }
+
+  function reportCostCard() {
+    const d = AGENT_DATA.cost;
+    if (!d) return reportPlaceholder("💰 Cost Impact", "Loading cost data…");
+    const items = Object.entries(d.category_totals).map(([key, val]) => ({
+      label: key.replace(/_/g, " "),
+      value: val
+    }));
+    return `
+      <div class="report-card">
+        <div class="report-card-title">💰 Cost Impact by Category</div>
+        ${pieChartHTML(items, v => fmtMoney(v, d.currency))}
+      </div>`;
+  }
+
+  function reportComplaintCard() {
+    const d = AGENT_DATA.complaint;
+    if (!d) return reportPlaceholder("📋 Complaints", "Loading complaint data…");
+    if (!d.complaints || d.complaints.length === 0) {
+      return `
+        <div class="report-card">
+          <div class="report-card-title">📋 Complaints</div>
+          <div class="optimal">No open complaints.</div>
+        </div>`;
+    }
+    const severityOrder = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+    const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    d.complaints.forEach(c => {
+      const s = (c.severity || "").toUpperCase();
+      counts[s] = (counts[s] ?? 0) + 1;
+    });
+    const items = severityOrder
+      .filter(s => counts[s] !== undefined)
+      .map(s => ({ label: s.charAt(0) + s.slice(1).toLowerCase(), value: counts[s] }));
+    const colors = ["#E5484D", "#FF7F50", "#F2A93B", "#4CAF6D"];
+    return `
+      <div class="report-card">
+        <div class="report-card-title">📋 Complaints by Severity</div>
+        ${pieChartHTML(items, v => `${v}`, colors)}
+      </div>`;
+  }
+
+  function reportInsuranceCard() {
+    const d = AGENT_DATA.insurance;
+    if (!d) return reportPlaceholder("🛡️ Insurance Claims", "Loading insurance data…");
+    if (!d.claims || d.claims.length === 0) {
+      return `
+        <div class="report-card">
+          <div class="report-card-title">🛡️ Insurance Claims</div>
+          <div class="optimal">No open claims.</div>
+        </div>`;
+    }
+    const order = ["URGENT", "HIGH", "STANDARD", "LOW"];
+    const counts = { URGENT: 0, HIGH: 0, STANDARD: 0, LOW: 0 };
+    d.claims.forEach(c => {
+      const p = (c.claim_priority || "").toUpperCase();
+      counts[p] = (counts[p] ?? 0) + 1;
+    });
+    const items = order
+      .filter(p => counts[p] !== undefined)
+      .map(p => ({ label: p.charAt(0) + p.slice(1).toLowerCase(), value: counts[p] }));
+    const colors = ["#E5484D", "#FF7F50", "#F2A93B", "#4CAF6D"];
+    return `
+      <div class="report-card">
+        <div class="report-card-title">🛡️ Insurance Claims by Priority</div>
+        ${pieChartHTML(items, v => `${v}`, colors)}
+      </div>`;
+  }
+
+  function renderReportVisuals() {
+    const grid = document.getElementById("report-grid");
+    if (!grid) return;
+    grid.innerHTML = [
+      reportWeatherCard(),
+      reportResourceCard(),
+      reportSafetyCard(),
+      reportScheduleCard(),
+      reportCostCard(),
+      reportComplaintCard(),
+      reportInsuranceCard()
+    ].join("");
+  }
+
+  // All agents render side by side now, so load every agent's data up
+  // front, in parallel. This runs at the end of the script, after every
+  // API_URL const above (across both script blocks) has been initialized,
+  // so each load function can safely use its own endpoint constant.
+  // Promise.all makes the concurrency explicit (each loadX() already fires
+  // its own fetch independently, but grouping them removes any ambiguity
+  // about ordering and lets us log once every agent has settled) - a slow
+  // or failed agent still resolves its own error-state card without
+  // blocking or hiding the others.
+  Promise.allSettled([
+    loadReport(),
+    loadResourceDashboard(),
+    loadScheduleReport(),
+    loadCostReport(),
+    loadComplaintReport(),
+    loadInsuranceReport()
+  ]).then(() => {
+    console.log("All agent dashboards loaded.");
+    renderReportVisuals();
+  });
+</script>
+
+<script>
+  // ---------------- Construction Safety / Worker Protection module (unmodified logic) ----------------
+  // FastAPI runs on port 8000. If this HTML is opened with
+  // VS Code Live Server (usually port 5500), use FastAPI instead of the
+  // frontend server. If FastAPI itself serves this page, use the same origin.
+  // const API_BASE = window.location.port === "8000"
+  //     ? window.location.origin
+  //     : "http://127.0.0.1:8000";
+
+  const API_BASE = window.location.origin
+
+  let cameraStream = null;
+  let capturedBlob = null;
+
+  const camera = document.getElementById("camera");
+  const preview = document.getElementById("preview");
+  const imageInput = document.getElementById("imageInput");
+  const canvas = document.getElementById("canvas");
+  const statusBox = document.getElementById("status");
+
+  imageInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (!file) return;
+
+      capturedBlob = file;
+
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.style.display = "block";
+      camera.classList.add("hidden");
+
+      showStatus("Image selected. You can now run an agent.", "ok");
+  });
+
+  async function startCamera() {
+      try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false
+          });
+
+          camera.srcObject = cameraStream;
+          camera.classList.remove("hidden");
+          preview.style.display = "none";
+
+          showStatus("Camera started.", "ok");
+      } catch (error) {
+          showStatus("Camera error: " + error.message, "error");
+      }
+  }
+
+  function stopCamera() {
+      if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+      }
+
+      camera.srcObject = null;
+      showStatus("Camera stopped.", "ok");
+  }
+
+  function captureFrame() {
+      if (!cameraStream) {
+          showStatus("Start the camera first.", "error");
+          return;
+      }
+
+      canvas.width = camera.videoWidth;
+      canvas.height = camera.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(function(blob) {
+          if (!blob) {
+              showStatus("Could not capture the camera frame.", "error");
+              return;
+          }
+
+          capturedBlob = blob;
+
+          preview.src = URL.createObjectURL(blob);
+          preview.style.display = "block";
+          camera.classList.add("hidden");
+
+          showStatus("Frame captured successfully.", "ok");
+      }, "image/jpeg", 0.9);
+  }
+
+  function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = "status " + type;
+      statusBox.style.display = "block";
+  }
+
+  async function sendImage(endpoint) {
+      if (!capturedBlob) {
+          showStatus("Please choose an image or capture a camera frame first.", "error");
+          return null;
+      }
+
+      const formData = new FormData();
+      const fileName = capturedBlob.name || "construction_frame.jpg";
+      formData.append("file", capturedBlob, fileName);
+
+      showStatus("Analyzing image...", "loading");
+
+      try {
+          const response = await fetch(API_BASE + endpoint, {
+              method: "POST",
+              body: formData
+          });
+
+          const responseText = await response.text();
+          let data = {};
+
+          try {
+              data = responseText ? JSON.parse(responseText) : {};
+          } catch (_) {
+              data = { detail: responseText };
+          }
+
+          if (!response.ok) {
+              throw new Error(
+                  `HTTP ${response.status}: ${data.detail || "API request failed"}`
+              );
+          }
+
+          showStatus("Analysis completed successfully.", "ok");
+          return data;
+
+      } catch (error) {
+          console.error("Safety API error:", error);
+
+          if (error instanceof TypeError) {
+              showStatus(
+                  "Cannot reach FastAPI. Open this dashboard from http://127.0.0.1:8000/ and make sure uvicorn is running.",
+                  "error"
+              );
+          } else {
+              showStatus("Safety Agent error: " + error.message, "error");
+          }
+
+          return null;
+      }
+  }
+
+  async function runSafety() {
+      const data = await sendImage("/api/safety-report");
+
+      if (!data) return;
+
+      document.getElementById("safetySection")
+          .classList.remove("hidden");
+
+      document.getElementById("safetyStatus").textContent =
+          data.status || "-";
+
+      document.getElementById("workerCount").textContent =
+          data.worker_count ?? "-";
+
+      document.getElementById("helmetViolations").textContent =
+          data.helmet_count ?? "-";
+
+      document.getElementById("vestViolations").textContent =
+          data.vest_count ?? "-";
+
+      document.getElementById("totalViolations").textContent =
+          data.total_violations ?? "-";
+
+      setStatusClass("safetyStatus", data.status);
+      updateSafetyKPI(data.status, `${data.total_violations ?? 0} violation(s) detected`);
+      AGENT_DATA.safety = { status: data.status, detail: `${data.total_violations ?? 0} violation(s) detected` };
+      renderReportVisuals();
+  }
+
+  function updateSafetyKPI(status, subText) {
+      const valueEl = document.getElementById("kpi-safety-value");
+      const subEl = document.getElementById("kpi-safety-sub");
+      if (!valueEl) return;
+      const text = String(status || "-").toUpperCase();
+      let cls = "risk-moderate";
+      if (text.includes("SAFE") || text.includes("LOW") || text.includes("NONE")) cls = "risk-low";
+      else if (text.includes("UNSAFE") || text.includes("HIGH") || text.includes("CRITICAL")) cls = "risk-critical";
+      valueEl.textContent = status || "-";
+      valueEl.className = "kpi-value " + cls;
+      subEl.textContent = subText;
+  }
+
+  async function runWorkerProtection() {
+      const data = await sendImage("/api/worker-protection-report");
+
+      if (!data) return;
+
+      document.getElementById("protectionSection")
+          .classList.remove("hidden");
+
+      const protection = data.worker_protection || {};
+      const workers = data.worker_reports || [];
+
+      document.getElementById("protectionStatus").textContent =
+          protection.worker_status || "-";
+
+      document.getElementById("riskLevel").textContent =
+          protection.risk_level || "-";
+
+      document.getElementById("protectionWorkerCount").textContent =
+          protection.worker_count ?? workers.length;
+
+      document.getElementById("hazardWorkers").textContent =
+          data.workers_in_hazard_zone ?? "-";
+
+      document.getElementById("recommendedAction").textContent =
+          protection.recommended_action || "-";
+
+      setStatusClass("riskLevel", protection.risk_level);
+      updateSafetyKPI(protection.risk_level, `${data.workers_in_hazard_zone ?? 0} worker(s) in hazard zone`);
+      AGENT_DATA.safety = { status: protection.risk_level, detail: `${data.workers_in_hazard_zone ?? 0} worker(s) in hazard zone` };
+      renderReportVisuals();
+
+      const container = document.getElementById("workersContainer");
+      container.innerHTML = "";
+
+      if (workers.length === 0) {
+          container.innerHTML =
+              '<div class="card">No individual workers detected.</div>';
+          return;
+      }
+
+      workers.forEach(function(worker, index) {
+          const div = document.createElement("div");
+          div.className = "worker";
+
+          div.innerHTML = `
+              <h4>Worker ${worker.worker_id ?? index + 1}</h4>
+
+              <div class="row">
+                  <span>Helmet</span>
+                  <strong>${worker.helmet ? "YES" : "NO"}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Vest</span>
+                  <strong>${worker.vest ? "YES" : "NO"}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Hazard Zone</span>
+                  <strong>${worker.hazard_zone ? "YES" : "NO"}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Risk Level</span>
+                  <strong>${worker.risk_level ?? "-"}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Recommended Action</span>
+                  <strong>${worker.recommended_action ?? "-"}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Helmet Violations</span>
+                  <strong>${worker.helmet_violation_count ?? 0}</strong>
+              </div>
+
+              <div class="row">
+                  <span>Vest Violations</span>
+                  <strong>${worker.vest_violation_count ?? 0}</strong>
+              </div>
+          `;
+
+          container.appendChild(div);
+      });
+  }
+
+  function setStatusClass(elementId, value) {
+      const element = document.getElementById(elementId);
+
+      element.classList.remove("safe", "unsafe", "warning");
+
+      const text = String(value || "").toUpperCase();
+
+      if (
+          text.includes("SAFE") ||
+          text.includes("LOW") ||
+          text.includes("NONE")
+      ) {
+          element.classList.add("safe");
+      } else if (
+          text.includes("UNSAFE") ||
+          text.includes("HIGH") ||
+          text.includes("CRITICAL")
+      ) {
+          element.classList.add("unsafe");
+      } else {
+          element.classList.add("warning");
+      }
+  }
+</script>
+
+</body>
+</html>
